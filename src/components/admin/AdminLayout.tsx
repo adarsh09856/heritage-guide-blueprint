@@ -26,22 +26,22 @@ const navItems = [
 ];
 
 export const AdminLayout = ({ children, activeSection, onSectionChange }: AdminLayoutProps) => {
-  const { user, role, signOut } = useAuth() as { user: any; role: string | null; signOut: () => Promise<void> };
+  const { user, userRole, signOut, isAdmin, isEditor } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
     if (!user) {
       navigate('/login');
-    } else if (role !== 'admin' && role !== 'editor') {
+    } else if (!isAdmin && !isEditor) {
       navigate('/');
     }
-  }, [user, role, navigate]);
+  }, [user, isAdmin, isEditor, navigate]);
 
-  if (!user || (role !== 'admin' && role !== 'editor')) {
+  if (!user || (!isAdmin && !isEditor)) {
     return null;
   }
 
-  const visibleNavItems = navItems.filter(item => !item.adminOnly || role === 'admin');
+  const visibleNavItems = navItems.filter(item => !item.adminOnly || isAdmin);
 
   return (
     <div className="min-h-screen bg-muted">
@@ -56,7 +56,7 @@ export const AdminLayout = ({ children, activeSection, onSectionChange }: AdminL
               Heritage Guide
             </Link>
             <span className="px-2 py-1 bg-primary text-primary-foreground text-xs font-medium rounded capitalize">
-              {role}
+              {userRole || 'user'}
             </span>
           </div>
           <div className="flex items-center gap-3">
