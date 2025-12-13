@@ -1,24 +1,35 @@
 import { Link } from 'react-router-dom';
-import { VirtualTour } from '@/types/heritage';
 import { Play, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 interface TourCardProps {
-  tour: VirtualTour;
+  tour: {
+    id: string;
+    title: string;
+    description?: string | null;
+    thumbnail_url?: string | null;
+    thumbnailUrl?: string;
+    tour_type?: string | null;
+    tourType?: string;
+    duration?: string | null;
+  };
 }
 
 export function TourCard({ tour }: TourCardProps) {
-  const tourTypeLabels = {
+  const tourTypeLabels: Record<string, string> = {
     '360': '360° View',
     'video': 'Video Tour',
     '3d': '3D Experience'
   };
 
+  const thumbnailUrl = tour.thumbnail_url || tour.thumbnailUrl || 'https://images.unsplash.com/photo-1569060708400-2b0f1d024648?w=400';
+  const tourType = tour.tour_type || tour.tourType || '360';
+
   return (
     <div className="group card-heritage overflow-hidden">
       <div className="relative h-48 overflow-hidden">
         <img
-          src={tour.thumbnailUrl}
+          src={thumbnailUrl}
           alt={tour.title}
           className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
         />
@@ -34,7 +45,7 @@ export function TourCard({ tour }: TourCardProps) {
         {/* Tour Type Badge */}
         <div className="absolute top-3 left-3">
           <span className="px-3 py-1 bg-forest text-sand text-xs font-medium rounded-full">
-            {tourTypeLabels[tour.tourType]}
+            {tourTypeLabels[tourType] || tourType}
           </span>
         </div>
         

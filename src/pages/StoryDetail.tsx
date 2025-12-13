@@ -3,15 +3,42 @@ import { useParams, Link } from 'react-router-dom';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
 import { sampleStories, sampleDestinations } from '@/data/sampleData';
+import { useStory } from '@/hooks/useStories';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Calendar, Clock, Share2, Bookmark, MapPin } from 'lucide-react';
+import { ArrowLeft, Calendar, Clock, Share2, Bookmark, MapPin, Loader2 } from 'lucide-react';
 
 const StoryDetail = () => {
   const { id } = useParams();
-  const story = sampleStories.find(s => s.id === id);
+  const { data: dbStory, isLoading } = useStory(id || '');
+  
+  // Fallback to sample data if not found in DB
+  const sampleStory = sampleStories.find(s => s.id === id);
+  
+  // Merge DB story or use sample
+  const story = dbStory ? {
+    id: dbStory.id,
+    title: dbStory.title,
+    excerpt: dbStory.excerpt || '',
+    content: dbStory.content || '',
+    author: (dbStory as any).profiles?.display_name || 'Anonymous',
+    authorAvatar: (dbStory as any).profiles?.avatar_url,
+    imageUrl: dbStory.image_url || '',
+    publishedAt: dbStory.published_at || dbStory.created_at || '',
+    tags: dbStory.tags || [],
+    destinationId: dbStory.destination_id
+  } : sampleStory;
+  
   const relatedDestination = story?.destinationId 
     ? sampleDestinations.find(d => d.id === story.destinationId)
     : null;
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   if (!story) {
     return (
