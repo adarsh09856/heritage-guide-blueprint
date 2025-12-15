@@ -1,6 +1,6 @@
 import { Link, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Menu, X, Globe, Compass, BookOpen, MapPin, User, Sparkles, LogOut, Settings } from 'lucide-react';
+import { Menu, X, Globe, Compass, BookOpen, MapPin, User, Sparkles, LogOut, Settings, Search } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import {
@@ -28,6 +28,7 @@ export function Navbar() {
 
   const navLinks = [
     { to: '/destinations', label: 'Destinations', icon: MapPin },
+    { to: '/search', label: 'Search', icon: Search },
     { to: '/virtual-tours', label: 'Virtual Tours', icon: Globe },
     { to: '/stories', label: 'Stories', icon: BookOpen },
     { to: '/experiences', label: 'Experiences', icon: Compass },
