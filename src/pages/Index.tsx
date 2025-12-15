@@ -6,6 +6,11 @@ import { FeaturedDestinations } from '@/components/home/FeaturedDestinations';
 import { VirtualToursSection } from '@/components/home/VirtualToursSection';
 import { StoriesSection } from '@/components/home/StoriesSection';
 import { CtaSection } from '@/components/home/CtaSection';
+import { StatsSection } from '@/components/home/StatsSection';
+import { RegionsSection } from '@/components/home/RegionsSection';
+import { UpcomingEventsSection } from '@/components/home/UpcomingEventsSection';
+import { TestimonialsSection } from '@/components/home/TestimonialsSection';
+import { NewsletterSection } from '@/components/home/NewsletterSection';
 
 const Index = () => {
   return (
@@ -23,10 +28,15 @@ const Index = () => {
         <Navbar />
         <main>
           <HeroSection />
+          <StatsSection />
           <FeaturedDestinations />
+          <RegionsSection />
           <VirtualToursSection />
+          <UpcomingEventsSection />
           <StoriesSection />
+          <TestimonialsSection />
           <CtaSection />
+          <NewsletterSection />
         </main>
         <Footer />
       </div>
