@@ -1,9 +1,24 @@
 import { Button } from '@/components/ui/button';
-import { ArrowRight, Compass, Globe, Play } from 'lucide-react';
+import { ArrowRight, Compass, Globe, Play, Search } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { Input } from '@/components/ui/input';
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import heroBackground from '@/assets/hero-background.jpg';
 
 export function HeroSection() {
+  const [searchQuery, setSearchQuery] = useState('');
+  const navigate = useNavigate();
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
+    } else {
+      navigate('/search');
+    }
+  };
+
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
       {/* Background Image */}
@@ -33,13 +48,28 @@ export function HeroSection() {
             <span className="block text-gradient mt-2">Cultural Treasures</span>
           </h1>
           
-          {/* Subtitle */}
-          <p className="text-sand/80 text-lg md:text-xl max-w-2xl mx-auto mb-10 animate-slide-up stagger-1">
-            Immerse yourself in virtual tours, uncover ancient histories, and plan unforgettable journeys to humanity's greatest heritage sites.
-          </p>
+          {/* Search Bar */}
+          <form onSubmit={handleSearch} className="max-w-2xl mx-auto mb-10 animate-slide-up stagger-2">
+            <div className="relative flex items-center">
+              <Search className="absolute left-4 w-5 h-5 text-sand/50" />
+              <Input
+                placeholder="Search destinations, countries, heritage types..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-12 pr-32 h-14 bg-sand/10 border-sand/20 text-sand placeholder:text-sand/50 rounded-full text-base backdrop-blur-sm"
+              />
+              <Button 
+                type="submit" 
+                variant="gold" 
+                className="absolute right-2 rounded-full px-6"
+              >
+                Search
+              </Button>
+            </div>
+          </form>
           
           {/* CTA Buttons */}
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 animate-slide-up stagger-2">
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 animate-slide-up stagger-3">
             <Link to="/destinations">
               <Button variant="gold" size="xl">
                 <Compass className="w-5 h-5" />
