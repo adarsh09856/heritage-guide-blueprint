@@ -6,9 +6,10 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Mail, Phone, MapPin, Send, MessageSquare, Clock } from 'lucide-react';
+import { Mail, Phone, MapPin, Send, MessageSquare, Clock, Loader2 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { z } from 'zod';
+import { supabase } from '@/integrations/supabase/client';
 
 const contactSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters').max(100),
@@ -48,16 +49,29 @@ const Contact = () => {
 
     setIsSubmitting(true);
     
-    // Simulate form submission
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    
-    toast({
-      title: 'Message sent!',
-      description: "We'll get back to you within 24-48 hours."
-    });
-    
-    setFormData({ name: '', email: '', subject: '', message: '' });
-    setIsSubmitting(false);
+    try {
+      const { data, error } = await supabase.functions.invoke('send-contact-email', {
+        body: formData
+      });
+
+      if (error) throw error;
+      
+      toast({
+        title: 'Message sent!',
+        description: "We'll get back to you within 24-48 hours. Check your email for confirmation."
+      });
+      
+      setFormData({ name: '', email: '', subject: '', message: '' });
+    } catch (error: any) {
+      console.error('Error sending email:', error);
+      toast({
+        title: 'Error sending message',
+        description: error.message || 'Please try again later.',
+        variant: 'destructive'
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const contactInfo = [
@@ -100,7 +114,7 @@ const Contact = () => {
           <div className="container mx-auto px-4">
             <div className="grid lg:grid-cols-2 gap-12 max-w-6xl mx-auto">
               {/* Form */}
-              <div className="bg-card p-8 rounded-2xl shadow-heritage-md">
+              <div className="bg-card p-8 rounded-2xl shadow-lg">
                 <h2 className="font-serif text-2xl font-bold mb-6">Send us a message</h2>
                 <form onSubmit={handleSubmit} className="space-y-5">
                   <div className="grid sm:grid-cols-2 gap-4">
@@ -155,8 +169,17 @@ const Contact = () => {
                   </div>
                   
                   <Button type="submit" variant="heritage" size="lg" className="w-full" disabled={isSubmitting}>
-                    {isSubmitting ? 'Sending...' : 'Send Message'}
-                    <Send className="w-4 h-4" />
+                    {isSubmitting ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        Sending...
+                      </>
+                    ) : (
+                      <>
+                        Send Message
+                        <Send className="w-4 h-4" />
+                      </>
+                    )}
                   </Button>
                 </form>
               </div>
