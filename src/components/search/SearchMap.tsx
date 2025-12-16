@@ -121,14 +121,31 @@ export function SearchMap({
         </div>
       `;
 
-      const popup = new mapboxgl.Popup({ offset: 25 }).setHTML(`
-        <div class="p-2 min-w-[200px]">
-          <img src="${dest.images?.[0] || 'https://images.unsplash.com/photo-1569060708400-2b0f1d024648?w=200'}" alt="${dest.title}" class="w-full h-24 object-cover rounded mb-2" />
-          <h3 class="font-bold text-sm">${dest.title}</h3>
-          <p class="text-xs text-gray-600">${dest.country || dest.region}</p>
-          ${dest.distance !== undefined ? `<p class="text-xs text-blue-600 mt-1">${Math.round(dest.distance)} km away</p>` : ''}
+      // Create popup with view button and directions
+      const directionsUrl = userLocation
+        ? `https://www.google.com/maps/dir/?api=1&origin=${userLocation.lat},${userLocation.lng}&destination=${dest.coordinates.lat},${dest.coordinates.lng}&travelmode=driving`
+        : `https://www.google.com/maps/dir/?api=1&destination=${dest.coordinates.lat},${dest.coordinates.lng}&travelmode=driving`;
+
+      const popupContent = `
+        <div class="p-3 min-w-[220px]">
+          <img src="${dest.images?.[0] || 'https://images.unsplash.com/photo-1569060708400-2b0f1d024648?w=200'}" alt="${dest.title}" class="w-full h-28 object-cover rounded-lg mb-3" />
+          <h3 class="font-bold text-base mb-1">${dest.title}</h3>
+          <p class="text-xs text-gray-600 mb-2">${dest.country || dest.region}</p>
+          ${dest.distance !== undefined ? `<p class="text-xs text-blue-600 font-medium mb-3">${Math.round(dest.distance)} km away</p>` : ''}
+          <div class="flex gap-2">
+            <a href="/destinations/${dest.slug}" class="flex-1 px-3 py-2 bg-amber-500 hover:bg-amber-600 text-white text-xs font-medium rounded-lg text-center transition-colors">
+              View Details
+            </a>
+            <a href="${directionsUrl}" target="_blank" class="px-3 py-2 bg-blue-500 hover:bg-blue-600 text-white text-xs font-medium rounded-lg text-center transition-colors flex items-center gap-1">
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+              </svg>
+            </a>
+          </div>
         </div>
-      `);
+      `;
+
+      const popup = new mapboxgl.Popup({ offset: 25, maxWidth: '280px' }).setHTML(popupContent);
 
       const marker = new mapboxgl.Marker({ element: el })
         .setLngLat([dest.coordinates.lng, dest.coordinates.lat])
