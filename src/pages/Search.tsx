@@ -350,6 +350,7 @@ const Search = () => {
                           destination={destination}
                           isSelected={selectedDestination?.id === destination.id}
                           onSelect={() => setSelectedDestination(destination)}
+                          userLocation={userLocation}
                         />
                       ))}
                     </div>

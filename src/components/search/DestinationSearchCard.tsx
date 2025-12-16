@@ -1,8 +1,13 @@
-import { MapPin, Navigation, Clock, Plane, Car, Star, ChevronRight, Compass } from 'lucide-react';
+import { MapPin, Navigation, Plane, Car, Star, ChevronRight, Compass, ExternalLink } from 'lucide-react';
 import { formatDistance, estimateTravelTime } from '@/lib/distance';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge';
+
+interface Coordinates {
+  lat: number;
+  lng: number;
+}
 
 interface Destination {
   id: string;
@@ -15,16 +20,35 @@ interface Destination {
   images: string[] | null;
   distance?: number;
   description?: string | null;
+  coordinates?: Coordinates | null;
 }
 
 interface DestinationSearchCardProps {
   destination: Destination;
   isSelected: boolean;
   onSelect: () => void;
+  userLocation?: Coordinates | null;
 }
 
-export function DestinationSearchCard({ destination, isSelected, onSelect }: DestinationSearchCardProps) {
+export function DestinationSearchCard({ destination, isSelected, onSelect, userLocation }: DestinationSearchCardProps) {
   const hasDistance = destination.distance !== undefined;
+  
+  const openDirections = (e: React.MouseEvent, mode: 'driving' | 'walking') => {
+    e.stopPropagation();
+    if (!destination.coordinates) return;
+    
+    const origin = userLocation 
+      ? `${userLocation.lat},${userLocation.lng}` 
+      : '';
+    const dest = `${destination.coordinates.lat},${destination.coordinates.lng}`;
+    const travelMode = mode === 'driving' ? 'driving' : 'walking';
+    
+    const url = origin
+      ? `https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${dest}&travelmode=${travelMode}`
+      : `https://www.google.com/maps/dir/?api=1&destination=${dest}&travelmode=${travelMode}`;
+    
+    window.open(url, '_blank');
+  };
   
   return (
     <div 
@@ -107,15 +131,39 @@ export function DestinationSearchCard({ destination, isSelected, onSelect }: Des
       {/* Expanded view on selection */}
       {isSelected && (
         <div className="px-4 pb-4 pt-0 border-t border-border/50 bg-muted/30">
-          <div className="flex items-center justify-between pt-3">
-            <p className="text-sm text-muted-foreground line-clamp-1 flex-1 mr-4">
+          <div className="flex flex-col gap-3 pt-3">
+            <p className="text-sm text-muted-foreground line-clamp-2">
               {destination.description || 'Discover this amazing heritage destination'}
             </p>
-            <Link to={`/destinations/${destination.slug}`}>
-              <Button variant="default" size="sm" className="shrink-0">
-                Explore Site
-              </Button>
-            </Link>
+            <div className="flex flex-wrap items-center gap-2">
+              <Link to={`/destinations/${destination.slug}`} className="flex-1">
+                <Button variant="default" size="sm" className="w-full">
+                  Explore Site
+                </Button>
+              </Link>
+              {destination.coordinates && (
+                <>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={(e) => openDirections(e, 'driving')}
+                    className="gap-1.5"
+                  >
+                    <Car className="w-4 h-4" />
+                    <span className="hidden sm:inline">Drive</span>
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={(e) => openDirections(e, 'walking')}
+                    className="gap-1.5"
+                  >
+                    <Navigation className="w-4 h-4" />
+                    <span className="hidden sm:inline">Walk</span>
+                  </Button>
+                </>
+              )}
+            </div>
           </div>
         </div>
       )}
