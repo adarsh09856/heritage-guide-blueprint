@@ -2,7 +2,7 @@ import { Helmet } from 'react-helmet-async';
 import { useParams, Link } from 'react-router-dom';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
-import { useDestination } from '@/hooks/useDestinations';
+import { useDestinationBySlug } from '@/hooks/useDestinations';
 import { useToggleBookmark, useIsBookmarked } from '@/hooks/useBookmarks';
 import { useAuth } from '@/contexts/AuthContext';
 import { sampleDestinations } from '@/data/sampleData';
@@ -15,14 +15,17 @@ import {
 import { toast } from '@/hooks/use-toast';
 
 const DestinationDetail = () => {
-  const { id } = useParams();
+  const { id: slug } = useParams(); // Route param is actually slug
   const { user } = useAuth();
-  const { data: dbDestination, isLoading } = useDestination(id || '');
-  const { data: isBookmarked } = useIsBookmarked(id || '');
+  const { data: dbDestination, isLoading } = useDestinationBySlug(slug || '');
+  
+  // Use actual destination ID for bookmarks
+  const destinationId = dbDestination?.id;
+  const { data: isBookmarked } = useIsBookmarked(destinationId || '');
   const toggleBookmark = useToggleBookmark();
 
   // Fall back to sample data if not in DB
-  const sampleDest = sampleDestinations.find(d => d.id === id);
+  const sampleDest = sampleDestinations.find(d => d.slug === slug || d.id === slug);
   
   const destination = dbDestination || (sampleDest ? {
     id: sampleDest.id,
@@ -52,8 +55,10 @@ const DestinationDetail = () => {
       toast({ title: 'Please sign in to save destinations', variant: 'destructive' });
       return;
     }
+    if (!destination?.id) return;
+    
     try {
-      const result = await toggleBookmark.mutateAsync(id!);
+      const result = await toggleBookmark.mutateAsync(destination.id);
       toast({ title: result.action === 'added' ? 'Destination saved!' : 'Removed from saved' });
     } catch {
       toast({ title: 'Failed to update bookmark', variant: 'destructive' });
