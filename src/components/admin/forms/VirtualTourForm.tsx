@@ -43,7 +43,7 @@ export const VirtualTourForm = ({ initialData, onSubmit, isLoading }: VirtualTou
       tour_url: initialData?.tour_url || '',
       tour_type: initialData?.tour_type || '360',
       duration: initialData?.duration || '',
-      is_published: initialData?.is_published || false,
+      is_published: initialData ? initialData.is_published : true, // Default to published for new items
     }
   });
 

@@ -48,7 +48,7 @@ export const DestinationForm = ({ initialData, onSubmit, isLoading }: Destinatio
       description: initialData?.description || '',
       history: initialData?.history || '',
       best_time_to_visit: initialData?.best_time_to_visit || '',
-      is_published: initialData?.is_published || false,
+      is_published: initialData ? initialData.is_published : true, // Default to published for new items
       is_featured: initialData?.is_featured || false,
       images: initialData?.images || [],
       features: initialData?.features || [],
