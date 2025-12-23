@@ -191,7 +191,7 @@ const StoryDetail = () => {
                 <div className="mt-12 p-6 bg-secondary/30 rounded-xl">
                   <h3 className="font-serif text-lg font-semibold mb-4">Related Destination</h3>
                   <Link 
-                    to={`/destinations/${relatedDestination.id}`}
+                    to={`/destinations/${(relatedDestination as any).slug || relatedDestination.id}`}
                     className="flex items-center gap-4 group"
                   >
                     <img 
