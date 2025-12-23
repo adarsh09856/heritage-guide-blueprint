@@ -15,7 +15,7 @@ export function DestinationCard({ destination, featured = false }: DestinationCa
   
   return (
     <Link 
-      to={`/destinations/${destination.id}`}
+      to={`/destinations/${destination.slug || destination.id}`}
       className={`group card-heritage block ${featured ? 'md:col-span-2 md:row-span-2' : ''}`}
     >
       <div className="relative overflow-hidden">
