@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useStories, useCreateStory, useUpdateStory, useDeleteStory } from '@/hooks/useStories';
 import { StoryForm } from './forms/StoryForm';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { toast } from 'sonner';
 import type { Tables } from '@/integrations/supabase/types';
@@ -162,6 +162,7 @@ export const StoriesManager = () => {
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Write Story</DialogTitle>
+            <DialogDescription>Create a new heritage story to share with your audience.</DialogDescription>
           </DialogHeader>
           <StoryForm onSubmit={handleCreate} isLoading={createMutation.isPending} />
         </DialogContent>
@@ -171,6 +172,7 @@ export const StoriesManager = () => {
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Edit Story</DialogTitle>
+            <DialogDescription>Update the details of this heritage story.</DialogDescription>
           </DialogHeader>
           {editingItem && (
             <StoryForm 
