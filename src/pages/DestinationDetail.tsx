@@ -185,7 +185,20 @@ const DestinationDetail = () => {
                 <Navigation className="w-4 h-4" />
                 Get Directions
               </Button>
-              <Button variant="gold" size="sm"><Play className="w-4 h-4" />Start Virtual Tour</Button>
+              <Button
+                variant="gold"
+                size="sm"
+                onClick={() => {
+                  const el = document.getElementById('destination-virtual-tour');
+                  el?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                  // attempt to open the player after scroll
+                  window.setTimeout(() => {
+                    document.getElementById('destination-virtual-tour-player')?.click();
+                  }, 250);
+                }}
+              >
+                <Play className="w-4 h-4" />Start Virtual Tour
+              </Button>
             </div>
           </div>
         </section>
@@ -207,11 +220,12 @@ const DestinationDetail = () => {
                   </div>
                 )}
 
-                <div>
+                <div id="destination-virtual-tour">
                   <h2 className="font-serif text-2xl font-semibold mb-4">Virtual Tour</h2>
                   <VirtualTourPlayer 
                     tour={destinationTour} 
-                    fallbackImage={imageUrl} 
+                    fallbackImage={imageUrl}
+                    triggerId="destination-virtual-tour-player"
                   />
                 </div>
 
