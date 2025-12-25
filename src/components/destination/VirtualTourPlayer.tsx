@@ -16,6 +16,7 @@ interface VirtualTour {
 interface VirtualTourPlayerProps {
   tour: VirtualTour | null;
   fallbackImage?: string;
+  triggerId?: string;
 }
 
 // Check if URL is a direct video file
@@ -51,7 +52,7 @@ const getEmbedUrl = (url: string): string => {
   return url;
 };
 
-export const VirtualTourPlayer = ({ tour, fallbackImage }: VirtualTourPlayerProps) => {
+export const VirtualTourPlayer = ({ tour, fallbackImage, triggerId }: VirtualTourPlayerProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -78,6 +79,8 @@ export const VirtualTourPlayer = ({ tour, fallbackImage }: VirtualTourPlayerProp
   return (
     <>
       <div 
+        id={triggerId}
+        data-virtual-tour-player
         className="aspect-video bg-gradient-to-br from-secondary to-muted rounded-xl flex items-center justify-center relative overflow-hidden cursor-pointer group"
         onClick={handlePlayClick}
       >
