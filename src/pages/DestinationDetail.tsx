@@ -14,7 +14,7 @@ import { VirtualTourPlayer } from '@/components/destination/VirtualTourPlayer';
 import { NearbyDestinations } from '@/components/destination/NearbyDestinations';
 import { 
   MapPin, Star, Calendar, Clock, Globe, Play, ArrowLeft, 
-  Camera, Map, Bookmark, Share2, ChevronRight, Loader2, Heart
+  Camera, Map, Bookmark, Share2, ChevronRight, Loader2, Heart, Navigation
 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 
@@ -72,6 +72,19 @@ const DestinationDetail = () => {
       toast({ title: result.action === 'added' ? 'Destination saved!' : 'Removed from saved' });
     } catch {
       toast({ title: 'Failed to update bookmark', variant: 'destructive' });
+    }
+  };
+
+  const openGoogleMapsDirections = () => {
+    const coords = destination?.coordinates as { lat: number; lng: number } | null;
+    if (coords) {
+      const url = `https://www.google.com/maps/dir/?api=1&destination=${coords.lat},${coords.lng}&destination_place_id=${encodeURIComponent(destination?.title || '')}`;
+      window.open(url, '_blank');
+    } else if (destination) {
+      // Fallback to search by name if no coordinates
+      const query = `${destination.title}, ${destination.country}, ${destination.region}`;
+      const url = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(query)}`;
+      window.open(url, '_blank');
     }
   };
 
@@ -168,6 +181,10 @@ const DestinationDetail = () => {
                 {isBookmarked ? 'Saved' : 'Save'}
               </Button>
               <Button variant="ghost" size="sm"><Share2 className="w-4 h-4" />Share</Button>
+              <Button variant="outline" size="sm" onClick={openGoogleMapsDirections}>
+                <Navigation className="w-4 h-4" />
+                Get Directions
+              </Button>
               <Button variant="gold" size="sm"><Play className="w-4 h-4" />Start Virtual Tour</Button>
             </div>
           </div>
