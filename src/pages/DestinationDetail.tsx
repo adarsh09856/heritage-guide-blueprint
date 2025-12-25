@@ -4,10 +4,13 @@ import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
 import { useDestinationBySlug } from '@/hooks/useDestinations';
 import { useToggleBookmark, useIsBookmarked } from '@/hooks/useBookmarks';
+import { useVirtualTours } from '@/hooks/useVirtualTours';
 import { useAuth } from '@/contexts/AuthContext';
 import { sampleDestinations } from '@/data/sampleData';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { DestinationMap } from '@/components/destination/DestinationMap';
+import { VirtualTourPlayer } from '@/components/destination/VirtualTourPlayer';
 import { 
   MapPin, Star, Calendar, Clock, Globe, Play, ArrowLeft, 
   Camera, Map, Bookmark, Share2, ChevronRight, Loader2, Heart
@@ -18,6 +21,12 @@ const DestinationDetail = () => {
   const { id: slug } = useParams(); // Route param is actually slug
   const { user } = useAuth();
   const { data: dbDestination, isLoading } = useDestinationBySlug(slug || '');
+  const { data: virtualTours = [] } = useVirtualTours({ published: true });
+  
+  // Find linked virtual tour for this destination
+  const destinationTour = dbDestination?.id 
+    ? virtualTours.find(tour => tour.destination_id === dbDestination.id)
+    : null;
   
   // Use actual destination ID for bookmarks
   const destinationId = dbDestination?.id;
@@ -182,16 +191,10 @@ const DestinationDetail = () => {
 
                 <div>
                   <h2 className="font-serif text-2xl font-semibold mb-4">Virtual Tour</h2>
-                  <div className="aspect-video bg-gradient-to-br from-secondary to-muted rounded-xl flex items-center justify-center relative overflow-hidden">
-                    <div className="absolute inset-0 bg-cover bg-center opacity-30" style={{ backgroundImage: `url(${imageUrl})` }} />
-                    <div className="relative z-10 text-center">
-                      <div className="w-20 h-20 rounded-full bg-gold/90 flex items-center justify-center mx-auto mb-4 shadow-heritage-lg cursor-pointer hover:scale-110 transition-transform">
-                        <Play className="w-8 h-8 text-foreground fill-current ml-1" />
-                      </div>
-                      <h3 className="font-serif text-xl font-semibold mb-2">360° Virtual Experience</h3>
-                      <p className="text-muted-foreground">Click to explore this heritage site in immersive 360°</p>
-                    </div>
-                  </div>
+                  <VirtualTourPlayer 
+                    tour={destinationTour} 
+                    fallbackImage={imageUrl} 
+                  />
                 </div>
 
                 {destination.images && destination.images.length > 1 && (
@@ -269,14 +272,18 @@ const DestinationDetail = () => {
 
                 <div className="card-heritage p-6">
                   <h3 className="font-serif text-lg font-semibold mb-4">Location</h3>
-                  <div className="aspect-square bg-secondary rounded-lg flex items-center justify-center">
-                    <div className="text-center">
-                      <Map className="w-8 h-8 mx-auto mb-2 text-muted-foreground" />
-                      <span className="text-sm text-muted-foreground">Interactive Map</span>
+                  {coords ? (
+                    <>
+                      <DestinationMap coordinates={coords} title={destination.title} />
+                      <p className="text-xs text-muted-foreground mt-2 text-center">{coords.lat}°N, {coords.lng}°E</p>
+                    </>
+                  ) : (
+                    <div className="aspect-square bg-secondary rounded-lg flex items-center justify-center">
+                      <div className="text-center">
+                        <Map className="w-8 h-8 mx-auto mb-2 text-muted-foreground" />
+                        <span className="text-sm text-muted-foreground">Location not available</span>
+                      </div>
                     </div>
-                  </div>
-                  {coords && (
-                    <p className="text-xs text-muted-foreground mt-2 text-center">{coords.lat}°N, {coords.lng}°E</p>
                   )}
                 </div>
               </div>

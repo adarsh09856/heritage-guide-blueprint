@@ -8,7 +8,9 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useDestinations } from '@/hooks/useDestinations';
-import { Loader2 } from 'lucide-react';
+import { useFileUpload } from '@/hooks/useFileUpload';
+import { Loader2, Upload, Image as ImageIcon } from 'lucide-react';
+import { toast } from '@/hooks/use-toast';
 import type { Tables } from '@/integrations/supabase/types';
 
 const schema = z.object({
@@ -32,6 +34,7 @@ interface VirtualTourFormProps {
 
 export const VirtualTourForm = ({ initialData, onSubmit, isLoading }: VirtualTourFormProps) => {
   const { data: destinations = [] } = useDestinations();
+  const { upload, isUploading } = useFileUpload();
   
   const { register, handleSubmit, setValue, watch, formState: { errors } } = useForm<FormData>({
     resolver: zodResolver(schema),
@@ -43,9 +46,37 @@ export const VirtualTourForm = ({ initialData, onSubmit, isLoading }: VirtualTou
       tour_url: initialData?.tour_url || '',
       tour_type: initialData?.tour_type || '360',
       duration: initialData?.duration || '',
-      is_published: initialData ? initialData.is_published : true, // Default to published for new items
+      is_published: initialData ? initialData.is_published : true,
     }
   });
+
+  const handleThumbnailUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    
+    try {
+      const url = await upload(file, 'images');
+      setValue('thumbnail_url', url);
+      toast({ title: 'Thumbnail uploaded successfully' });
+    } catch (error) {
+      toast({ title: 'Failed to upload thumbnail', variant: 'destructive' });
+    }
+  };
+
+  const handleVideoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    
+    try {
+      const url = await upload(file, 'videos');
+      setValue('tour_url', url);
+      toast({ title: 'Video uploaded successfully' });
+    } catch (error) {
+      toast({ title: 'Failed to upload video', variant: 'destructive' });
+    }
+  };
+
+  const thumbnailUrl = watch('thumbnail_url');
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
@@ -102,13 +133,72 @@ export const VirtualTourForm = ({ initialData, onSubmit, isLoading }: VirtualTou
       </div>
 
       <div>
-        <Label htmlFor="thumbnail_url">Thumbnail URL</Label>
-        <Input id="thumbnail_url" {...register('thumbnail_url')} placeholder="https://..." />
+        <Label>Thumbnail Image</Label>
+        <div className="space-y-2">
+          {thumbnailUrl && (
+            <div className="w-32 h-20 rounded overflow-hidden">
+              <img src={thumbnailUrl} alt="Thumbnail" className="w-full h-full object-cover" />
+            </div>
+          )}
+          <div className="flex gap-2 items-center">
+            <label className="cursor-pointer">
+              <input 
+                type="file" 
+                accept="image/*" 
+                onChange={handleThumbnailUpload} 
+                className="hidden" 
+                disabled={isUploading}
+              />
+              <Button type="button" variant="outline" size="sm" asChild disabled={isUploading}>
+                <span>
+                  {isUploading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Upload className="w-4 h-4 mr-2" />}
+                  Upload Image
+                </span>
+              </Button>
+            </label>
+            <span className="text-sm text-muted-foreground">or</span>
+            <Input 
+              {...register('thumbnail_url')} 
+              placeholder="https://..." 
+              className="flex-1"
+            />
+          </div>
+        </div>
       </div>
 
       <div>
-        <Label htmlFor="tour_url">Tour URL</Label>
-        <Input id="tour_url" {...register('tour_url')} placeholder="https://..." />
+        <Label>Tour Content</Label>
+        <p className="text-sm text-muted-foreground mb-2">
+          Upload a video or provide an external tour URL (YouTube, Vimeo, Matterport, etc.)
+        </p>
+        <div className="flex gap-2 items-center">
+          <label className="cursor-pointer">
+            <input 
+              type="file" 
+              accept="video/*" 
+              onChange={handleVideoUpload} 
+              className="hidden" 
+              disabled={isUploading}
+            />
+            <Button type="button" variant="outline" size="sm" asChild disabled={isUploading}>
+              <span>
+                {isUploading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Upload className="w-4 h-4 mr-2" />}
+                Upload Video
+              </span>
+            </Button>
+          </label>
+          <span className="text-sm text-muted-foreground">or</span>
+          <Input 
+            {...register('tour_url')} 
+            placeholder="https://youtube.com/... or https://matterport.com/..." 
+            className="flex-1"
+          />
+        </div>
+        {watch('tour_url') && (
+          <p className="text-xs text-muted-foreground mt-1">
+            Current: {watch('tour_url')?.substring(0, 50)}...
+          </p>
+        )}
       </div>
 
       <div className="flex items-center gap-2">
