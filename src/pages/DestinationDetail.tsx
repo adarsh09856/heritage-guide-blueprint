@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { DestinationMap } from '@/components/destination/DestinationMap';
 import { VirtualTourPlayer } from '@/components/destination/VirtualTourPlayer';
+import { NearbyDestinations } from '@/components/destination/NearbyDestinations';
 import { 
   MapPin, Star, Calendar, Clock, Globe, Play, ArrowLeft, 
   Camera, Map, Bookmark, Share2, ChevronRight, Loader2, Heart
@@ -274,7 +275,12 @@ const DestinationDetail = () => {
                   <h3 className="font-serif text-lg font-semibold mb-4">Location</h3>
                   {coords ? (
                     <>
-                      <DestinationMap coordinates={coords} title={destination.title} />
+                      <DestinationMap 
+                        coordinates={coords} 
+                        title={destination.title} 
+                        destinationId={destination.id}
+                        showNearby={true}
+                      />
                       <p className="text-xs text-muted-foreground mt-2 text-center">{coords.lat}°N, {coords.lng}°E</p>
                     </>
                   ) : (
@@ -286,6 +292,11 @@ const DestinationDetail = () => {
                     </div>
                   )}
                 </div>
+
+                <NearbyDestinations 
+                  currentCoordinates={coords} 
+                  currentId={destination.id} 
+                />
               </div>
             </div>
           </div>
