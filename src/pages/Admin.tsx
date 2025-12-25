@@ -5,6 +5,7 @@ import { AdminLayout } from '@/components/admin/AdminLayout';
 import { AdminDashboard } from '@/components/admin/AdminDashboard';
 import { DestinationsManager } from '@/components/admin/DestinationsManager';
 import { VirtualToursManager } from '@/components/admin/VirtualToursManager';
+import { AdminMapExplorer } from '@/components/admin/AdminMapExplorer';
 import { StoriesManager } from '@/components/admin/StoriesManager';
 import { ExperiencesManager } from '@/components/admin/ExperiencesManager';
 import { EventsManager } from '@/components/admin/EventsManager';
@@ -63,6 +64,8 @@ const Admin = () => {
         return <DestinationsManager />;
       case 'tours':
         return <VirtualToursManager />;
+      case 'map-explorer':
+        return <AdminMapExplorer />;
       case 'stories':
         return <StoriesManager />;
       case 'experiences':

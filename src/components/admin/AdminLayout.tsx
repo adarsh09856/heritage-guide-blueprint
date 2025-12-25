@@ -3,7 +3,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useEffect } from 'react';
 import { 
   LayoutDashboard, MapPin, Globe, BookOpen, Users, 
-  Settings, Calendar, Sparkles, Eye, LogOut, FileImage
+  Settings, Calendar, Sparkles, Eye, LogOut, FileImage, Navigation
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
@@ -17,6 +17,7 @@ const navItems = [
   { id: 'dashboard', icon: LayoutDashboard, label: 'Dashboard' },
   { id: 'destinations', icon: MapPin, label: 'Destinations' },
   { id: 'tours', icon: Globe, label: 'Virtual Tours' },
+  { id: 'map-explorer', icon: Navigation, label: 'Map Explorer' },
   { id: 'stories', icon: BookOpen, label: 'Stories' },
   { id: 'experiences', icon: Sparkles, label: 'Experiences' },
   { id: 'events', icon: Calendar, label: 'Events' },
