@@ -15,13 +15,13 @@ import type { Tables } from '@/integrations/supabase/types';
 const schema = z.object({
   title: z.string().min(1, 'Title is required'),
   slug: z.string().min(1, 'Slug is required'),
-  excerpt: z.string().optional(),
-  content: z.string().optional(),
-  image_url: z.string().optional(),
-  destination_id: z.string().optional(),
+  excerpt: z.string().optional().nullable(),
+  content: z.string().optional().nullable(),
+  image_url: z.string().optional().nullable(),
+  destination_id: z.string().optional().nullable(),
   tags: z.array(z.string()).optional(),
   is_published: z.boolean().optional(),
-  author_id: z.string().optional(),
+  author_id: z.string().optional().nullable(),
 });
 
 type FormData = z.infer<typeof schema>;
@@ -44,10 +44,10 @@ export const StoryForm = ({ initialData, onSubmit, isLoading }: StoryFormProps) 
       excerpt: initialData?.excerpt || '',
       content: initialData?.content || '',
       image_url: initialData?.image_url || '',
-      destination_id: initialData?.destination_id || '',
+      destination_id: initialData?.destination_id || null,
       tags: initialData?.tags || [],
       is_published: initialData?.is_published || false,
-      author_id: initialData?.author_id || user?.id || '',
+      author_id: initialData?.author_id || user?.id || null,
     }
   });
 
@@ -56,10 +56,16 @@ export const StoryForm = ({ initialData, onSubmit, isLoading }: StoryFormProps) 
   };
 
   const handleFormSubmit = (data: FormData) => {
-    onSubmit({
+    // Clean up empty strings to null for optional fields
+    const cleanedData = {
       ...data,
-      author_id: data.author_id || user?.id,
-    });
+      excerpt: data.excerpt || null,
+      content: data.content || null,
+      image_url: data.image_url || null,
+      destination_id: data.destination_id || null,
+      author_id: data.author_id || user?.id || null,
+    };
+    onSubmit(cleanedData);
   };
 
   return (
@@ -89,14 +95,14 @@ export const StoryForm = ({ initialData, onSubmit, isLoading }: StoryFormProps) 
       <div>
         <Label htmlFor="destination_id">Related Destination</Label>
         <Select 
-          value={watch('destination_id') || ''} 
-          onValueChange={(v) => setValue('destination_id', v)}
+          value={watch('destination_id') || 'none'} 
+          onValueChange={(v) => setValue('destination_id', v === 'none' ? null : v)}
         >
           <SelectTrigger>
             <SelectValue placeholder="Select destination" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">None</SelectItem>
+            <SelectItem value="none">None</SelectItem>
             {destinations.map(d => (
               <SelectItem key={d.id} value={d.id}>{d.title}</SelectItem>
             ))}

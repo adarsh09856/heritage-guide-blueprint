@@ -3,8 +3,26 @@ import { StoryCard } from '@/components/cards/StoryCard';
 import { Button } from '@/components/ui/button';
 import { ArrowRight, BookOpen } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { useStories } from '@/hooks/useStories';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export function StoriesSection() {
+  const { data: dbStories, isLoading } = useStories({ published: true, limit: 3 });
+
+  // Use database data or fall back to sample data
+  const stories = dbStories?.length ? dbStories.map((s: any) => ({
+    id: s.id,
+    title: s.title,
+    excerpt: s.excerpt || '',
+    content: s.content || '',
+    author: s.profiles?.display_name || 'Anonymous',
+    authorAvatar: s.profiles?.avatar_url,
+    imageUrl: s.image_url || '',
+    publishedAt: s.published_at || s.created_at,
+    tags: s.tags || [],
+    destinationId: s.destination_id
+  })) : sampleStories.slice(0, 3);
+
   return (
     <section className="py-20 bg-background">
       <div className="container mx-auto px-4">
@@ -31,11 +49,19 @@ export function StoriesSection() {
         </div>
 
         {/* Stories Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {sampleStories.map((story) => (
-            <StoryCard key={story.id} story={story} />
-          ))}
-        </div>
+        {isLoading ? (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {[1, 2, 3].map((i) => (
+              <Skeleton key={i} className="h-80 rounded-xl" />
+            ))}
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {stories.map((story: any) => (
+              <StoryCard key={story.id} story={story} />
+            ))}
+          </div>
+        )}
       </div>
     </section>
   );
