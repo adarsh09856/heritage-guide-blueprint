@@ -1,9 +1,10 @@
 import { useState } from 'react';
-import { Plus, Search, Edit, Trash2, Eye, EyeOff } from 'lucide-react';
+import { Plus, Search, Edit, Trash2, Eye, EyeOff, Upload } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useDestinations, useCreateDestination, useUpdateDestination, useDeleteDestination } from '@/hooks/useDestinations';
 import { DestinationForm } from './forms/DestinationForm';
+import { BulkImportDestinations } from './BulkImportDestinations';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { toast } from 'sonner';
@@ -19,6 +20,7 @@ export const DestinationsManager = () => {
 
   const [searchQuery, setSearchQuery] = useState('');
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [isImportOpen, setIsImportOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<Destination | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
@@ -75,10 +77,16 @@ export const DestinationsManager = () => {
           <h1 className="font-serif text-2xl font-bold">Destinations</h1>
           <p className="text-muted-foreground">Manage heritage site listings</p>
         </div>
-        <Button variant="gold" onClick={() => setIsFormOpen(true)}>
-          <Plus className="w-4 h-4" />
-          Add Destination
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" onClick={() => setIsImportOpen(true)}>
+            <Upload className="w-4 h-4" />
+            Bulk Import
+          </Button>
+          <Button variant="gold" onClick={() => setIsFormOpen(true)}>
+            <Plus className="w-4 h-4" />
+            Add Destination
+          </Button>
+        </div>
       </div>
 
       <div className="flex items-center gap-4 mb-6">
@@ -202,6 +210,9 @@ export const DestinationsManager = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Bulk Import Dialog */}
+      <BulkImportDestinations open={isImportOpen} onOpenChange={setIsImportOpen} />
     </>
   );
 };
