@@ -15,7 +15,6 @@ interface PlaceResult {
 }
 
 serve(async (req) => {
-  // Handle CORS preflight
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -27,125 +26,102 @@ serve(async (req) => {
     }
 
     const { lat, lng, query, radius = 50000, limit = 20 } = await req.json();
-
-    // Categories for tourism/heritage places
-    const tourismCategories = [
-      'historic_site',
-      'museum',
-      'monument',
-      'archaeological_site',
-      'landmark',
-      'temple',
-      'church',
-      'castle',
-      'palace',
-      'national_park',
-      'nature_reserve',
-      'tourist_attraction',
-      'heritage',
-      'cultural'
-    ].join(',');
+    console.log('Request params:', { lat, lng, query, radius, limit });
 
     let results: PlaceResult[] = [];
 
     if (query) {
-      // Search by query using Mapbox Geocoding API
+      // Search by query - use broader search without type restriction
       const searchUrl = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(query)}.json?` +
         `access_token=${mapboxToken}` +
-        `&types=poi` +
-        `&limit=${limit}` +
+        `&limit=${Math.min(limit, 10)}` +
         (lat && lng ? `&proximity=${lng},${lat}` : '');
 
-      console.log('Searching places with query:', query);
+      console.log('Search URL:', searchUrl.replace(mapboxToken, 'TOKEN'));
+      
       const searchRes = await fetch(searchUrl);
       const searchData = await searchRes.json();
+      
+      console.log('Search response features count:', searchData.features?.length || 0);
 
       if (searchData.features) {
-        results = searchData.features.map((feature: any) => ({
-          id: feature.id,
-          name: feature.text,
-          category: feature.properties?.category || 'Point of Interest',
-          address: feature.place_name,
-          coordinates: {
-            lng: feature.center[0],
-            lat: feature.center[1]
-          },
-          distance: lat && lng ? calculateDistance(lat, lng, feature.center[1], feature.center[0]) : undefined
-        }));
+        results = searchData.features.map((feature: any) => {
+          const placeName = feature.place_name || '';
+          const textName = feature.text || '';
+          const context = feature.context || [];
+          
+          // Extract category from place_type
+          const placeType = feature.place_type?.[0] || 'place';
+          const category = formatCategory(placeType, feature.properties?.category);
+          
+          return {
+            id: feature.id,
+            name: textName,
+            category: category,
+            address: placeName,
+            coordinates: {
+              lng: feature.center[0],
+              lat: feature.center[1]
+            },
+            distance: lat && lng ? calculateDistance(lat, lng, feature.center[1], feature.center[0]) : undefined
+          };
+        });
       }
     } else if (lat && lng) {
-      // Search nearby using Mapbox Tilequery for POIs
-      // First, use reverse geocoding to get nearby places
-      const nearbyUrl = `https://api.mapbox.com/geocoding/v5/mapbox.places/${lng},${lat}.json?` +
-        `access_token=${mapboxToken}` +
-        `&types=poi` +
-        `&limit=${limit}`;
+      // For nearby places, search for common tourism-related terms
+      const tourismTerms = [
+        'museum',
+        'temple', 
+        'monument',
+        'palace',
+        'fort',
+        'beach',
+        'park',
+        'church',
+        'historical',
+        'heritage'
+      ];
 
       console.log('Fetching nearby places at:', lat, lng);
-      const nearbyRes = await fetch(nearbyUrl);
-      const nearbyData = await nearbyRes.json();
-
-      // Also search for specific tourism-related terms nearby
-      const tourismSearches = ['museum', 'temple', 'monument', 'castle', 'historic', 'heritage', 'palace', 'park'];
-      const additionalResults: PlaceResult[] = [];
-
-      for (const term of tourismSearches.slice(0, 3)) { // Limit API calls
-        const termUrl = `https://api.mapbox.com/geocoding/v5/mapbox.places/${term}.json?` +
-          `access_token=${mapboxToken}` +
-          `&types=poi` +
-          `&proximity=${lng},${lat}` +
-          `&limit=5`;
-
+      
+      // Search for each tourism term
+      for (const term of tourismTerms) {
         try {
+          const termUrl = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(term)}.json?` +
+            `access_token=${mapboxToken}` +
+            `&proximity=${lng},${lat}` +
+            `&limit=5`;
+
           const termRes = await fetch(termUrl);
           const termData = await termRes.json();
-          
+
           if (termData.features) {
-            termData.features.forEach((feature: any) => {
+            for (const feature of termData.features) {
               const distance = calculateDistance(lat, lng, feature.center[1], feature.center[0]);
-              if (distance <= radius / 1000) { // Convert to km
-                additionalResults.push({
-                  id: feature.id,
-                  name: feature.text,
-                  category: term.charAt(0).toUpperCase() + term.slice(1),
-                  address: feature.place_name,
-                  coordinates: {
-                    lng: feature.center[0],
-                    lat: feature.center[1]
-                  },
-                  distance
-                });
+              
+              // Only include places within radius (in km)
+              if (distance <= radius / 1000) {
+                const existingIndex = results.findIndex(r => r.id === feature.id);
+                if (existingIndex === -1) {
+                  results.push({
+                    id: feature.id,
+                    name: feature.text || feature.place_name?.split(',')[0] || 'Unknown',
+                    category: formatCategory(feature.place_type?.[0], term),
+                    address: feature.place_name || '',
+                    coordinates: {
+                      lng: feature.center[0],
+                      lat: feature.center[1]
+                    },
+                    distance
+                  });
+                }
               }
-            });
+            }
           }
         } catch (e) {
           console.error(`Error searching for ${term}:`, e);
         }
       }
-
-      // Combine results
-      if (nearbyData.features) {
-        results = nearbyData.features.map((feature: any) => ({
-          id: feature.id,
-          name: feature.text,
-          category: feature.properties?.category || 'Point of Interest',
-          address: feature.place_name,
-          coordinates: {
-            lng: feature.center[0],
-            lat: feature.center[1]
-          },
-          distance: calculateDistance(lat, lng, feature.center[1], feature.center[0])
-        }));
-      }
-
-      // Merge and dedupe
-      const seen = new Set(results.map(r => r.id));
-      additionalResults.forEach(r => {
-        if (!seen.has(r.id)) {
-          results.push(r);
-          seen.add(r.id);
-        }
-      });
 
       // Sort by distance
       results.sort((a, b) => (a.distance || 0) - (b.distance || 0));
@@ -166,7 +142,25 @@ serve(async (req) => {
   }
 });
 
-// Haversine formula
+function formatCategory(placeType: string, hint?: string): string {
+  const typeMap: Record<string, string> = {
+    'poi': 'Point of Interest',
+    'place': 'Place',
+    'locality': 'Town',
+    'neighborhood': 'Neighborhood',
+    'address': 'Address',
+    'region': 'Region',
+    'country': 'Country',
+    'district': 'District'
+  };
+  
+  if (hint) {
+    return hint.charAt(0).toUpperCase() + hint.slice(1);
+  }
+  
+  return typeMap[placeType] || 'Attraction';
+}
+
 function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
   const R = 6371;
   const dLat = toRad(lat2 - lat1);
