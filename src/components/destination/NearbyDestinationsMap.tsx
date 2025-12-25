@@ -2,9 +2,8 @@ import { useEffect, useRef, useState } from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { useMapboxToken } from '@/hooks/useMapboxToken';
-import { useDestinations } from '@/hooks/useDestinations';
 import { useNearbyMapPlaces, useSearchMapPlaces, MapPlace } from '@/hooks/useMapPlaces';
-import { calculateDistance, formatDistance } from '@/lib/distance';
+import { formatDistance } from '@/lib/distance';
 import { Map, Loader2, MapPin, Navigation, Search, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -30,7 +29,6 @@ export const NearbyDestinationsMap = ({
   const [activeSearch, setActiveSearch] = useState('');
   
   const { data: token, isLoading: tokenLoading } = useMapboxToken();
-  const { data: dbDestinations } = useDestinations({ published: true });
   
   // Fetch nearby places from Mapbox
   const { data: nearbyPlaces, isLoading: placesLoading } = useNearbyMapPlaces(
@@ -107,7 +105,7 @@ export const NearbyDestinationsMap = ({
     };
   }, [token, userLocation]);
 
-  // Add markers for all places
+  // Add markers for external places only
   useEffect(() => {
     if (!map.current) return;
 
@@ -122,12 +120,12 @@ export const NearbyDestinationsMap = ({
       hasValidCoords = true;
     }
 
-    // Determine which places to show
+    // Show only external Mapbox places
     const placesToShow: MapPlace[] = activeSearch && searchResults 
       ? searchResults 
       : nearbyPlaces || [];
 
-    // Add markers for map places (from Mapbox API)
+    // Add markers for external map places only
     placesToShow.forEach((place) => {
       if (!place.coordinates?.lat || !place.coordinates?.lng || !map.current) return;
 
@@ -139,12 +137,20 @@ export const NearbyDestinationsMap = ({
         distanceText = `<p style="font-size: 12px; color: #666; margin: 4px 0 0;">${formatDistance(place.distance)} from you</p>`;
       }
 
+      // Create directions URL
+      const destination = `${place.coordinates.lat},${place.coordinates.lng}`;
+      const origin = userLocation ? `${userLocation.lat},${userLocation.lng}` : '';
+      const directionsUrl = origin 
+        ? `https://www.google.com/maps/dir/${origin}/${destination}`
+        : `https://www.google.com/maps/search/?api=1&query=${destination}`;
+
       const popup = new mapboxgl.Popup({ offset: 25 }).setHTML(`
         <div style="padding: 4px; max-width: 220px;">
           <strong style="font-size: 14px;">${place.name}</strong>
           <p style="font-size: 11px; color: #c9a86c; margin: 2px 0;">${place.category}</p>
-          <p style="font-size: 11px; color: #888; margin: 2px 0;">${place.address}</p>
+          <p style="font-size: 11px; color: #888; margin: 2px 0; line-height: 1.3;">${place.address}</p>
           ${distanceText}
+          <a href="${directionsUrl}" target="_blank" style="display: inline-block; margin-top: 8px; font-size: 12px; color: #2d5a45; text-decoration: none; font-weight: 500;">Get Directions →</a>
         </div>
       `);
 
@@ -156,50 +162,13 @@ export const NearbyDestinationsMap = ({
       markersRef.current.push(marker);
     });
 
-    // Add markers for uploaded destinations (different color)
-    dbDestinations?.forEach((dest) => {
-      const coords = dest.coordinates as unknown as { lat: number; lng: number } | null;
-      if (!coords?.lat || !coords?.lng || !map.current) return;
-
-      bounds.extend([coords.lng, coords.lat]);
-      hasValidCoords = true;
-
-      let distanceText = '';
-      if (userLocation) {
-        const distance = calculateDistance(
-          userLocation.lat,
-          userLocation.lng,
-          coords.lat,
-          coords.lng
-        );
-        distanceText = `<p style="font-size: 12px; color: #666; margin: 4px 0 0;">${formatDistance(distance)} from you</p>`;
-      }
-
-      const popup = new mapboxgl.Popup({ offset: 25 }).setHTML(`
-        <div style="padding: 4px; max-width: 200px;">
-          <strong style="font-size: 14px;">${dest.title}</strong>
-          <p style="font-size: 11px; color: #c9a86c; margin: 2px 0;">Featured Destination</p>
-          <p style="font-size: 12px; color: #888; margin: 2px 0;">${dest.region}</p>
-          ${distanceText}
-          <a href="/destination/${dest.slug}" style="font-size: 12px; color: #c9a86c; text-decoration: none; font-weight: 500;">View details →</a>
-        </div>
-      `);
-
-      const marker = new mapboxgl.Marker({ color: '#c9a86c' })
-        .setLngLat([coords.lng, coords.lat])
-        .setPopup(popup)
-        .addTo(map.current!);
-
-      markersRef.current.push(marker);
-    });
-
-    if (hasValidCoords && map.current) {
+    if (hasValidCoords && map.current && placesToShow.length > 0) {
       map.current.fitBounds(bounds, {
         padding: 50,
-        maxZoom: userLocation ? 12 : 4,
+        maxZoom: 12,
       });
     }
-  }, [dbDestinations, nearbyPlaces, searchResults, activeSearch, userLocation]);
+  }, [nearbyPlaces, searchResults, activeSearch, userLocation]);
 
   if (tokenLoading) {
     return (
@@ -263,7 +232,7 @@ export const NearbyDestinationsMap = ({
       )}
 
       {/* Results count */}
-      {!isLoading && (totalPlaces > 0 || dbDestinations?.length) && (
+      {!isLoading && totalPlaces > 0 && (
         <div className="absolute top-16 left-4 bg-background/95 backdrop-blur-sm rounded-lg px-3 py-2 shadow-lg border border-border">
           <div className="flex items-center gap-2 text-sm flex-wrap">
             {activeSearch && (
@@ -272,8 +241,7 @@ export const NearbyDestinationsMap = ({
               </Badge>
             )}
             <span className="text-muted-foreground">
-              {totalPlaces} places from map
-              {dbDestinations?.length ? ` + ${dbDestinations.length} featured` : ''}
+              {totalPlaces} places found
             </span>
           </div>
         </div>
@@ -283,12 +251,8 @@ export const NearbyDestinationsMap = ({
       <div className="absolute bottom-4 right-4 bg-background/95 backdrop-blur-sm rounded-lg px-3 py-2 shadow-lg border border-border">
         <div className="flex flex-col gap-1 text-xs">
           <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded-full" style={{ background: '#c9a86c' }} />
-            <span>Featured destinations</span>
-          </div>
-          <div className="flex items-center gap-2">
             <div className="w-3 h-3 rounded-full" style={{ background: '#2d5a45' }} />
-            <span>Nearby attractions</span>
+            <span>Attractions</span>
           </div>
           {userLocation && (
             <div className="flex items-center gap-2">
