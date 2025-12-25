@@ -3,20 +3,31 @@ import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
 import { DestinationCard } from '@/components/cards/DestinationCard';
 import { useDestinations } from '@/hooks/useDestinations';
+import { useUserLocation } from '@/hooks/useUserLocation';
+import { NearbyDestinationsMap } from '@/components/destination/NearbyDestinationsMap';
 import { sampleDestinations, regions, heritageTypes } from '@/data/sampleData';
 import { useState, useMemo } from 'react';
-import { Search, MapPin, Grid, List } from 'lucide-react';
+import { Search, MapPin, Grid, List, Navigation } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Badge } from '@/components/ui/badge';
+import { calculateDistance, formatDistance } from '@/lib/distance';
 
 const Destinations = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedRegion, setSelectedRegion] = useState('All Regions');
   const [selectedType, setSelectedType] = useState('All Types');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [sortByDistance, setSortByDistance] = useState(false);
 
   const { data: dbDestinations, isLoading } = useDestinations({ published: true });
+  const { 
+    location: userLocation, 
+    error: locationError, 
+    isLoading: isLoadingLocation, 
+    requestLocation 
+  } = useUserLocation(true); // Auto-request if already granted
 
   // Use database data or fall back to sample data
   const allDestinations = useMemo(() => {
@@ -49,14 +60,37 @@ const Destinations = () => {
   }, [dbDestinations]);
 
   const filteredDestinations = useMemo(() => {
-    return allDestinations.filter((dest) => {
+    const filtered = allDestinations.filter((dest) => {
       const matchesSearch = dest.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
                            (dest.country?.toLowerCase() || '').includes(searchQuery.toLowerCase());
       const matchesRegion = selectedRegion === 'All Regions' || dest.region === selectedRegion;
       const matchesType = selectedType === 'All Types' || dest.heritage_type === selectedType;
       return matchesSearch && matchesRegion && matchesType;
     });
-  }, [searchQuery, selectedRegion, selectedType, allDestinations]);
+
+    // Add distance and sort if user location is available
+    if (userLocation) {
+      const withDistance = filtered.map(dest => {
+        const coords = dest.coordinates as unknown as { lat: number; lng: number } | null;
+        const distance = coords?.lat && coords?.lng
+          ? calculateDistance(userLocation.lat, userLocation.lng, coords.lat, coords.lng)
+          : null;
+        return { ...dest, distance };
+      });
+
+      if (sortByDistance) {
+        withDistance.sort((a, b) => {
+          if (a.distance === null) return 1;
+          if (b.distance === null) return -1;
+          return a.distance - b.distance;
+        });
+      }
+
+      return withDistance;
+    }
+
+    return filtered.map(dest => ({ ...dest, distance: null as number | null }));
+  }, [searchQuery, selectedRegion, selectedType, allDestinations, userLocation, sortByDistance]);
 
   return (
     <>
@@ -82,6 +116,30 @@ const Destinations = () => {
                 Discover remarkable heritage sites from ancient temples to natural wonders across every continent.
               </p>
             </div>
+          </div>
+        </section>
+
+        {/* Map Section */}
+        <section className="py-6 border-b border-border">
+          <div className="container mx-auto px-4">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <Navigation className="w-5 h-5 text-primary" />
+                <h2 className="font-serif text-xl font-semibold">Explore on Map</h2>
+              </div>
+              {userLocation && (
+                <Badge variant="outline" className="flex items-center gap-1">
+                  <div className="w-2 h-2 bg-blue-500 rounded-full" />
+                  Location enabled
+                </Badge>
+              )}
+            </div>
+            <NearbyDestinationsMap
+              userLocation={userLocation}
+              onRequestLocation={requestLocation}
+              isLoadingLocation={isLoadingLocation}
+              locationError={locationError}
+            />
           </div>
         </section>
 
@@ -122,6 +180,19 @@ const Destinations = () => {
                   ))}
                 </select>
 
+                {/* Distance Sort Toggle */}
+                {userLocation && (
+                  <Button
+                    variant={sortByDistance ? 'heritage' : 'outline'}
+                    size="sm"
+                    onClick={() => setSortByDistance(!sortByDistance)}
+                    className="gap-2"
+                  >
+                    <Navigation className="w-4 h-4" />
+                    {sortByDistance ? 'Sorted by distance' : 'Sort by distance'}
+                  </Button>
+                )}
+
                 {/* View Toggle */}
                 <div className="flex items-center gap-1 border border-border rounded-lg p-1">
                   <button
@@ -146,9 +217,16 @@ const Destinations = () => {
         <section className="py-12">
           <div className="container mx-auto px-4">
             {/* Results Count */}
-            <div className="flex items-center gap-2 mb-6 text-muted-foreground">
-              <MapPin className="w-4 h-4" />
-              <span>{filteredDestinations.length} destinations found</span>
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-2 text-muted-foreground">
+                <MapPin className="w-4 h-4" />
+                <span>{filteredDestinations.length} destinations found</span>
+              </div>
+              {userLocation && sortByDistance && (
+                <span className="text-sm text-muted-foreground">
+                  Showing nearest first
+                </span>
+              )}
             </div>
 
             {/* Grid/List */}
