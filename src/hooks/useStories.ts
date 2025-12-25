@@ -14,17 +14,13 @@ export function useStories(options?: { published?: boolean; limit?: number }) {
         .from('stories')
         .select(`
           *,
-          profiles:author_id (
-            display_name,
-            avatar_url
-          ),
           destinations:destination_id (
             id,
             title,
             slug
           )
         `)
-        .order('published_at', { ascending: false });
+        .order('published_at', { ascending: false, nullsFirst: false });
       
       if (options?.published !== undefined) {
         query = query.eq('is_published', options.published);
@@ -34,10 +30,28 @@ export function useStories(options?: { published?: boolean; limit?: number }) {
         query = query.limit(options.limit);
       }
       
-      const { data, error } = await query;
+      const { data: stories, error } = await query;
       
       if (error) throw error;
-      return data;
+      
+      // Fetch author profiles separately
+      if (stories && stories.length > 0) {
+        const authorIds = [...new Set(stories.map(s => s.author_id).filter(Boolean))];
+        if (authorIds.length > 0) {
+          const { data: profiles } = await supabase
+            .from('profiles')
+            .select('user_id, display_name, avatar_url')
+            .in('user_id', authorIds);
+          
+          // Merge profiles with stories
+          return stories.map(story => ({
+            ...story,
+            profiles: profiles?.find(p => p.user_id === story.author_id) || null
+          }));
+        }
+      }
+      
+      return stories?.map(story => ({ ...story, profiles: null })) || [];
     }
   });
 }
@@ -46,21 +60,30 @@ export function useStory(id: string) {
   return useQuery({
     queryKey: ['story', id],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data: story, error } = await supabase
         .from('stories')
         .select(`
           *,
-          profiles:author_id (
-            display_name,
-            avatar_url
-          ),
           destinations:destination_id (*)
         `)
         .eq('id', id)
         .maybeSingle();
       
       if (error) throw error;
-      return data;
+      if (!story) return null;
+      
+      // Fetch author profile separately
+      if (story.author_id) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('user_id, display_name, avatar_url')
+          .eq('user_id', story.author_id)
+          .maybeSingle();
+        
+        return { ...story, profiles: profile };
+      }
+      
+      return { ...story, profiles: null };
     },
     enabled: !!id
   });
@@ -70,21 +93,30 @@ export function useStoryBySlug(slug: string) {
   return useQuery({
     queryKey: ['story', 'slug', slug],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data: story, error } = await supabase
         .from('stories')
         .select(`
           *,
-          profiles:author_id (
-            display_name,
-            avatar_url
-          ),
           destinations:destination_id (*)
         `)
         .eq('slug', slug)
         .maybeSingle();
       
       if (error) throw error;
-      return data;
+      if (!story) return null;
+      
+      // Fetch author profile separately
+      if (story.author_id) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('user_id, display_name, avatar_url')
+          .eq('user_id', story.author_id)
+          .maybeSingle();
+        
+        return { ...story, profiles: profile };
+      }
+      
+      return { ...story, profiles: null };
     },
     enabled: !!slug
   });
