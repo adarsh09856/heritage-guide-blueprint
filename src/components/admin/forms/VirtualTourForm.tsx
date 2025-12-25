@@ -15,12 +15,12 @@ import type { Tables } from '@/integrations/supabase/types';
 
 const schema = z.object({
   title: z.string().min(1, 'Title is required'),
-  description: z.string().optional(),
-  destination_id: z.string().optional(),
-  thumbnail_url: z.string().optional(),
-  tour_url: z.string().optional(),
-  tour_type: z.string().optional(),
-  duration: z.string().optional(),
+  description: z.string().optional().nullable(),
+  destination_id: z.string().optional().nullable(),
+  thumbnail_url: z.string().optional().nullable(),
+  tour_url: z.string().optional().nullable(),
+  tour_type: z.string().optional().nullable(),
+  duration: z.string().optional().nullable(),
   is_published: z.boolean().optional(),
 });
 
@@ -41,7 +41,7 @@ export const VirtualTourForm = ({ initialData, onSubmit, isLoading }: VirtualTou
     defaultValues: {
       title: initialData?.title || '',
       description: initialData?.description || '',
-      destination_id: initialData?.destination_id || '',
+      destination_id: initialData?.destination_id || null,
       thumbnail_url: initialData?.thumbnail_url || '',
       tour_url: initialData?.tour_url || '',
       tour_type: initialData?.tour_type || '360',
@@ -49,6 +49,19 @@ export const VirtualTourForm = ({ initialData, onSubmit, isLoading }: VirtualTou
       is_published: initialData ? initialData.is_published : true,
     }
   });
+
+  const handleFormSubmit = (data: FormData) => {
+    // Clean up empty strings to null for optional fields
+    const cleanedData = {
+      ...data,
+      description: data.description || null,
+      destination_id: data.destination_id || null,
+      thumbnail_url: data.thumbnail_url || null,
+      tour_url: data.tour_url || null,
+      duration: data.duration || null,
+    };
+    onSubmit(cleanedData);
+  };
 
   const handleThumbnailUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -79,7 +92,7 @@ export const VirtualTourForm = ({ initialData, onSubmit, isLoading }: VirtualTou
   const thumbnailUrl = watch('thumbnail_url');
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+    <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-6">
       <div>
         <Label htmlFor="title">Title *</Label>
         <Input id="title" {...register('title')} />
@@ -89,14 +102,14 @@ export const VirtualTourForm = ({ initialData, onSubmit, isLoading }: VirtualTou
       <div>
         <Label htmlFor="destination_id">Linked Destination</Label>
         <Select 
-          value={watch('destination_id') || ''} 
-          onValueChange={(v) => setValue('destination_id', v)}
+          value={watch('destination_id') || 'none'} 
+          onValueChange={(v) => setValue('destination_id', v === 'none' ? null : v)}
         >
           <SelectTrigger>
             <SelectValue placeholder="Select destination" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">None</SelectItem>
+            <SelectItem value="none">None</SelectItem>
             {destinations.map(d => (
               <SelectItem key={d.id} value={d.id}>{d.title}</SelectItem>
             ))}
