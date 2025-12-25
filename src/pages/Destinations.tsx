@@ -5,6 +5,8 @@ import { DestinationCard } from '@/components/cards/DestinationCard';
 import { useDestinations } from '@/hooks/useDestinations';
 import { useUserLocation } from '@/hooks/useUserLocation';
 import { NearbyDestinationsMap } from '@/components/destination/NearbyDestinationsMap';
+import { NearbyPlacesList } from '@/components/destination/NearbyPlacesList';
+import { useNearbyMapPlaces } from '@/hooks/useMapPlaces';
 import { sampleDestinations, regions, heritageTypes } from '@/data/sampleData';
 import { useState, useMemo } from 'react';
 import { Search, MapPin, Grid, List, Navigation } from 'lucide-react';
@@ -27,7 +29,14 @@ const Destinations = () => {
     error: locationError, 
     isLoading: isLoadingLocation, 
     requestLocation 
-  } = useUserLocation(true); // Auto-request if already granted
+  } = useUserLocation(true);
+  
+  // Fetch nearby places from map
+  const { data: nearbyPlaces = [], isLoading: placesLoading } = useNearbyMapPlaces(
+    userLocation?.lat || null,
+    userLocation?.lng || null,
+    20
+  );
 
   // Use database data or fall back to sample data
   const allDestinations = useMemo(() => {
@@ -140,6 +149,25 @@ const Destinations = () => {
               isLoadingLocation={isLoadingLocation}
               locationError={locationError}
             />
+            
+            {/* Nearby Places List */}
+            <div className="mt-8">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="font-serif text-lg font-semibold">
+                  {userLocation ? 'Nearby Attractions' : 'Discover Attractions'}
+                </h3>
+                {nearbyPlaces.length > 0 && (
+                  <span className="text-sm text-muted-foreground">
+                    {nearbyPlaces.length} places found
+                  </span>
+                )}
+              </div>
+              <NearbyPlacesList 
+                places={nearbyPlaces} 
+                isLoading={placesLoading} 
+                userLocation={userLocation}
+              />
+            </div>
           </div>
         </section>
 
