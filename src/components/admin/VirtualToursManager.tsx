@@ -1,9 +1,10 @@
 import { useState } from 'react';
-import { Plus, Search, Edit, Trash2, Eye, EyeOff, Globe } from 'lucide-react';
+import { Plus, Search, Edit, Trash2, Eye, EyeOff, Globe, Play } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useVirtualTours, useCreateVirtualTour, useUpdateVirtualTour, useDeleteVirtualTour } from '@/hooks/useVirtualTours';
 import { VirtualTourForm } from './forms/VirtualTourForm';
+import { VirtualTourPlayer } from '@/components/destination/VirtualTourPlayer';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { toast } from 'sonner';
@@ -21,6 +22,7 @@ export const VirtualToursManager = () => {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<VirtualTour | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [previewingTour, setPreviewingTour] = useState<VirtualTour | null>(null);
 
   const filtered = tours.filter(t =>
     t.title.toLowerCase().includes(searchQuery.toLowerCase())
@@ -104,15 +106,20 @@ export const VirtualToursManager = () => {
                   alt={tour.title}
                   className="w-full h-full object-cover"
                 />
-                <div className="absolute inset-0 bg-foreground/20 flex items-center justify-center">
-                  <Globe className="w-12 h-12 text-sand" />
+                <div 
+                  className="absolute inset-0 bg-foreground/20 flex items-center justify-center cursor-pointer hover:bg-foreground/30 transition-colors"
+                  onClick={() => setPreviewingTour(tour)}
+                >
+                  <div className="w-12 h-12 rounded-full bg-gold/90 flex items-center justify-center">
+                    <Play className="w-6 h-6 text-foreground fill-current ml-0.5" />
+                  </div>
                 </div>
                 <div className="absolute top-3 right-3 flex gap-1">
                   <Button 
                     variant="secondary" 
                     size="icon" 
                     className="h-8 w-8"
-                    onClick={() => togglePublish(tour)}
+                    onClick={(e) => { e.stopPropagation(); togglePublish(tour); }}
                   >
                     {tour.is_published ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </Button>
@@ -120,7 +127,7 @@ export const VirtualToursManager = () => {
                     variant="secondary" 
                     size="icon" 
                     className="h-8 w-8"
-                    onClick={() => setEditingItem(tour)}
+                    onClick={(e) => { e.stopPropagation(); setEditingItem(tour); }}
                   >
                     <Edit className="w-4 h-4" />
                   </Button>
@@ -128,7 +135,7 @@ export const VirtualToursManager = () => {
                     variant="secondary" 
                     size="icon" 
                     className="h-8 w-8 text-destructive"
-                    onClick={() => setDeletingId(tour.id)}
+                    onClick={(e) => { e.stopPropagation(); setDeletingId(tour.id); }}
                   >
                     <Trash2 className="w-4 h-4" />
                   </Button>
@@ -160,6 +167,20 @@ export const VirtualToursManager = () => {
           )}
         </div>
       )}
+
+      {/* Preview Dialog */}
+      <Dialog open={!!previewingTour} onOpenChange={() => setPreviewingTour(null)}>
+        <DialogContent className="max-w-4xl p-0">
+          <DialogHeader className="p-4 pb-0">
+            <DialogTitle>Preview: {previewingTour?.title}</DialogTitle>
+          </DialogHeader>
+          <div className="p-4">
+            {previewingTour && (
+              <VirtualTourPlayer tour={previewingTour} />
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
