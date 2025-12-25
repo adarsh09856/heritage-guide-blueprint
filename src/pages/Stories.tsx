@@ -4,9 +4,9 @@ import { Footer } from '@/components/layout/Footer';
 import { StoryCard } from '@/components/cards/StoryCard';
 import { useStories } from '@/hooks/useStories';
 import { sampleStories } from '@/data/sampleData';
-import { BookOpen, PenTool } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { BookOpen } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
+import { SubmitStoryDialog } from '@/components/stories/SubmitStoryDialog';
 
 const Stories = () => {
   const { data: dbStories, isLoading } = useStories({ published: true });
@@ -54,10 +54,7 @@ const Stories = () => {
               <p className="text-muted-foreground text-lg mb-8">
                 Discover fascinating stories, archaeological findings, and conservation efforts from experts and explorers around the world.
               </p>
-              <Button variant="heritage" size="lg">
-                <PenTool className="w-5 h-5" />
-                Submit Your Story
-              </Button>
+              <SubmitStoryDialog />
             </div>
           </div>
         </section>
