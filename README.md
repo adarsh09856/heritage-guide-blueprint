@@ -1,73 +1,143 @@
-# Welcome to your Lovable project
+# Heritage Explorer - Cultural Tourism Platform
 
-## Project info
+A comprehensive web application for discovering and exploring cultural heritage destinations, stories, events, and virtual tours.
 
-**URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
+## Features
 
-## How can I edit this code?
+- 🏛️ **Destinations** - Browse cultural heritage sites with detailed information, images, and maps
+- 📖 **Stories** - Read and submit cultural stories from around the world
+- 🎉 **Events** - Discover upcoming cultural events and festivals
+- 🎯 **Experiences** - Find guided tours, workshops, and cultural activities
+- 🎥 **Virtual Tours** - Explore heritage sites through immersive virtual experiences
+- 🗺️ **Interactive Maps** - View destinations on Mapbox-powered maps
+- 🔐 **Admin Dashboard** - Manage all content with role-based access control
+- 🔖 **Bookmarks** - Save your favorite destinations
+- 📱 **Responsive Design** - Works seamlessly on desktop and mobile
 
-There are several ways of editing your application.
+## Tech Stack
 
-**Use Lovable**
+- **Frontend**: React 18, TypeScript, Vite
+- **Styling**: Tailwind CSS, shadcn/ui components
+- **Backend**: Supabase (Database, Auth, Storage, Edge Functions)
+- **Maps**: Mapbox GL JS
+- **State Management**: TanStack Query (React Query)
+- **Routing**: React Router DOM
+- **Forms**: React Hook Form with Zod validation
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and start prompting.
+## Prerequisites
 
-Changes made via Lovable will be committed automatically to this repo.
+- Node.js 18+ and npm
+- A Supabase project (or use Lovable Cloud)
+- Mapbox access token (for maps functionality)
 
-**Use your preferred IDE**
+## Getting Started
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+### 1. Clone the Repository
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
-
-```sh
-# Step 1: Clone the repository using the project's Git URL.
+```bash
 git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
 cd <YOUR_PROJECT_NAME>
+```
 
-# Step 3: Install the necessary dependencies.
-npm i
+### 2. Install Dependencies
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
+```bash
+npm install
+```
+
+### 3. Environment Variables
+
+The project uses the following environment variables (automatically configured if using Lovable):
+
+```env
+VITE_SUPABASE_URL=your_supabase_url
+VITE_SUPABASE_PUBLISHABLE_KEY=your_supabase_anon_key
+VITE_SUPABASE_PROJECT_ID=your_project_id
+```
+
+### 4. Database Setup
+
+If setting up manually, run the migrations in `supabase/migrations/` to create:
+- `destinations` - Heritage sites and locations
+- `stories` - Cultural stories and articles
+- `events` - Cultural events and festivals
+- `experiences` - Tours and activities
+- `virtual_tours` - Virtual tour content
+- `profiles` - User profiles
+- `bookmarks` - User saved destinations
+- `user_roles` - Role-based access control
+
+### 5. Configure Secrets
+
+For edge functions to work, configure the following secrets:
+- `MAPBOX_ACCESS_TOKEN` - For map functionality
+- `RESEND_API_KEY` - For contact form emails (optional)
+
+### 6. Run Development Server
+
+```bash
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+The app will be available at `http://localhost:5173`
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+## Project Structure
 
-**Use GitHub Codespaces**
+```
+src/
+├── components/
+│   ├── admin/          # Admin dashboard components
+│   ├── cards/          # Reusable card components
+│   ├── destination/    # Destination detail components
+│   ├── home/           # Homepage sections
+│   ├── layout/         # Navbar, Footer
+│   ├── search/         # Search functionality
+│   ├── stories/        # Story components
+│   └── ui/             # shadcn/ui components
+├── contexts/           # React contexts (Auth)
+├── hooks/              # Custom React hooks
+├── pages/              # Route pages
+├── types/              # TypeScript types
+└── lib/                # Utility functions
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+supabase/
+├── functions/          # Edge functions
+│   ├── get-mapbox-token/
+│   ├── search-places/
+│   └── send-contact-email/
+└── migrations/         # Database migrations
+```
 
-## What technologies are used for this project?
+## Available Scripts
 
-This project is built with:
+- `npm run dev` - Start development server
+- `npm run build` - Build for production
+- `npm run preview` - Preview production build
+- `npm run lint` - Run ESLint
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+## User Roles
 
-## How can I deploy this project?
+- **User** - Browse content, bookmark destinations, submit stories
+- **Editor** - All user permissions + manage content
+- **Admin** - Full access including user management
 
-Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
+## Deployment
 
-## Can I connect a custom domain to my Lovable project?
+### Via Lovable
+Click **Share → Publish** in the Lovable editor.
 
-Yes, you can!
+### Manual Deployment
+1. Build the project: `npm run build`
+2. Deploy the `dist/` folder to your hosting provider
+3. Configure environment variables on your host
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+## Contributing
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Submit a pull request
+
+## License
+
+This project is private and proprietary.
