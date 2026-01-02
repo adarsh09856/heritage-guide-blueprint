@@ -104,9 +104,6 @@ supabase/
 
 ## Deployment
 
-### Via Lovable
-
-Click **Share → Publish** in the Lovable editor.
 
 ### Manual Deployment
 
@@ -114,13 +111,3 @@ Click **Share → Publish** in the Lovable editor.
 2. Deploy the `dist/` folder to your hosting provider
 3. Configure environment variables on your host
 
-## Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Submit a pull request
-
-## License
-
-This project is private and proprietary.
