@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -14,16 +15,45 @@ interface PlaceResult {
   distance?: number;
 }
 
+async function getMapboxTokenFromDB(): Promise<string | null> {
+  try {
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    
+    const { data, error } = await supabase
+      .from("app_settings")
+      .select("value")
+      .eq("key", "MAPBOX_PUBLIC_TOKEN")
+      .single();
+
+    if (error || !data?.value) {
+      return null;
+    }
+
+    return data.value;
+  } catch (e) {
+    console.error("Error fetching Mapbox token from DB:", e);
+    return null;
+  }
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const mapboxToken = Deno.env.get('MAPBOX_PUBLIC_TOKEN');
+    // Try database first, then fall back to env variable
+    const dbToken = await getMapboxTokenFromDB();
+    const mapboxToken = dbToken || Deno.env.get('MAPBOX_PUBLIC_TOKEN');
+    
     if (!mapboxToken) {
-      throw new Error('Mapbox token not configured');
+      throw new Error('Mapbox token not configured. Please set it in Admin Settings or Cloud Secrets.');
     }
+
+    console.log('Using Mapbox token from:', dbToken ? 'database' : 'environment');
 
     const { lat, lng, query, radius = 50000, limit = 20 } = await req.json();
     console.log('Request params:', { lat, lng, query, radius, limit });

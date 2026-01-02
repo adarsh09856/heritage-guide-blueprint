@@ -195,6 +195,7 @@ export const SettingsManager = () => {
 
   const emailSettings = settings.filter(s => s.key.includes('GMAIL') || s.key === 'CONTACT_EMAIL');
   const generalSettings = settings.filter(s => s.key === 'SITE_NAME');
+  const mapSettings = settings.filter(s => s.key === 'MAPBOX_PUBLIC_TOKEN');
 
   return (
     <div className="max-w-3xl">
@@ -266,6 +267,53 @@ export const SettingsManager = () => {
                 className="text-sm text-primary hover:underline"
               >
                 → Generate Gmail App Password
+              </a>
+            </div>
+          </div>
+        </div>
+
+        {/* Mapbox Configuration */}
+        <div className="bg-background rounded-xl p-6 shadow-heritage-sm">
+          <h3 className="font-semibold mb-4 flex items-center gap-2">
+            <Shield className="w-5 h-5" />
+            Map Configuration (Mapbox)
+          </h3>
+          <p className="text-sm text-muted-foreground mb-4">
+            Configure Mapbox for interactive maps and location search.
+          </p>
+          <div className="space-y-4">
+            {mapSettings.map(setting => (
+              <div key={setting.key}>
+                <Label htmlFor={setting.key}>{setting.description || setting.key}</Label>
+                <div className="relative">
+                  <Input
+                    id={setting.key}
+                    type={setting.is_secret && !showSecrets[setting.key] ? 'password' : 'text'}
+                    value={formValues[setting.key] || ''}
+                    onChange={(e) => setFormValues(prev => ({ ...prev, [setting.key]: e.target.value }))}
+                    placeholder={setting.is_secret ? '••••••••' : setting.description || ''}
+                    className="pr-10"
+                  />
+                  {setting.is_secret && (
+                    <button
+                      type="button"
+                      onClick={() => toggleSecretVisibility(setting.key)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                    >
+                      {showSecrets[setting.key] ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  )}
+                </div>
+              </div>
+            ))}
+            <div className="pt-2">
+              <a 
+                href="https://account.mapbox.com/access-tokens/" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-sm text-primary hover:underline"
+              >
+                → Get Mapbox Access Token
               </a>
             </div>
           </div>
