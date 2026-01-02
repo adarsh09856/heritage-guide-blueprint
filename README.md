@@ -32,32 +32,10 @@ A comprehensive web application for discovering and exploring cultural heritage 
 
 ## Getting Started
 
-### 1. Clone the Repository
-
-```bash
-git clone <YOUR_GIT_URL>
-cd <YOUR_PROJECT_NAME>
-```
-
-### 2. Install Dependencies
-
-```bash
-npm install
-```
-
-### 3. Environment Variables
-
-The project uses the following environment variables (automatically configured if using Lovable):
-
-```env
-VITE_SUPABASE_URL=your_supabase_url
-VITE_SUPABASE_PUBLISHABLE_KEY=your_supabase_anon_key
-VITE_SUPABASE_PROJECT_ID=your_project_id
-```
-
 ### 4. Database Setup
 
 If setting up manually, run the migrations in `supabase/migrations/` to create:
+
 - `destinations` - Heritage sites and locations
 - `stories` - Cultural stories and articles
 - `events` - Cultural events and festivals
@@ -70,10 +48,13 @@ If setting up manually, run the migrations in `supabase/migrations/` to create:
 ### 5. Configure Secrets
 
 For edge functions to work, configure the following secrets:
+
 - `MAPBOX_ACCESS_TOKEN` - For map functionality
 - `RESEND_API_KEY` - For contact form emails (optional)
 
 ### 6. Run Development Server
+
+// npm install
 
 ```bash
 npm run dev
@@ -124,9 +105,11 @@ supabase/
 ## Deployment
 
 ### Via Lovable
+
 Click **Share → Publish** in the Lovable editor.
 
 ### Manual Deployment
+
 1. Build the project: `npm run build`
 2. Deploy the `dist/` folder to your hosting provider
 3. Configure environment variables on your host
