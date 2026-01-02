@@ -2,7 +2,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
-import { Database, Users, FileImage, Shield, Mail, Eye, EyeOff } from 'lucide-react';
+import { Database, Users, FileImage, Shield, Mail, Eye, EyeOff, Map, HelpCircle, ChevronDown, ChevronUp } from 'lucide-react';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { supabase } from '@/integrations/supabase/client';
 import { sampleDestinations, sampleVirtualTours, sampleStories, sampleExperiences } from '@/data/sampleData';
 import { useState, useEffect } from 'react';
@@ -21,6 +22,8 @@ export const SettingsManager = () => {
   const [settings, setSettings] = useState<AppSetting[]>([]);
   const [showSecrets, setShowSecrets] = useState<Record<string, boolean>>({});
   const [formValues, setFormValues] = useState<Record<string, string>>({});
+  const [showGmailGuide, setShowGmailGuide] = useState(false);
+  const [showMapboxGuide, setShowMapboxGuide] = useState(false);
 
   useEffect(() => {
     fetchSettings();
@@ -232,8 +235,55 @@ export const SettingsManager = () => {
           </h3>
           <p className="text-sm text-muted-foreground mb-4">
             Configure Gmail SMTP for sending contact form emails and notifications.
-            You need a Gmail App Password (not your regular password).
           </p>
+          
+          {/* Gmail Setup Guide */}
+          <Collapsible open={showGmailGuide} onOpenChange={setShowGmailGuide} className="mb-4">
+            <CollapsibleTrigger className="flex items-center gap-2 text-sm text-primary hover:underline w-full justify-between bg-muted/50 p-3 rounded-lg">
+              <span className="flex items-center gap-2">
+                <HelpCircle className="w-4 h-4" />
+                Gmail App Password Setup Guide
+              </span>
+              {showGmailGuide ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+            </CollapsibleTrigger>
+            <CollapsibleContent className="mt-2">
+              <div className="bg-muted/30 rounded-lg p-4 text-sm space-y-3 border border-border">
+                <h4 className="font-semibold text-foreground">Step-by-Step Guide:</h4>
+                <ol className="list-decimal list-inside space-y-2 text-muted-foreground">
+                  <li>
+                    <strong className="text-foreground">Enable 2-Step Verification</strong>
+                    <p className="ml-5 mt-1">Go to <a href="https://myaccount.google.com/security" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">Google Account Security</a> and enable 2-Step Verification if not already enabled.</p>
+                  </li>
+                  <li>
+                    <strong className="text-foreground">Generate App Password</strong>
+                    <p className="ml-5 mt-1">Visit <a href="https://myaccount.google.com/apppasswords" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">App Passwords</a> in your Google Account.</p>
+                  </li>
+                  <li>
+                    <strong className="text-foreground">Create New App Password</strong>
+                    <p className="ml-5 mt-1">Select "Mail" as the app and "Other" as the device. Enter a name like "Heritage Site".</p>
+                  </li>
+                  <li>
+                    <strong className="text-foreground">Copy the Password</strong>
+                    <p className="ml-5 mt-1">Google will generate a 16-character password. Copy it (spaces are optional).</p>
+                  </li>
+                  <li>
+                    <strong className="text-foreground">Enter Credentials Below</strong>
+                    <p className="ml-5 mt-1">
+                      <strong>Gmail User:</strong> Your full Gmail address (e.g., yourname@gmail.com)<br/>
+                      <strong>Gmail App Password:</strong> The 16-character password you just copied<br/>
+                      <strong>Contact Email:</strong> Email where you want to receive contact form submissions
+                    </p>
+                  </li>
+                </ol>
+                <div className="mt-3 p-3 bg-amber-500/10 border border-amber-500/30 rounded-lg">
+                  <p className="text-amber-700 dark:text-amber-400 text-xs">
+                    <strong>⚠️ Important:</strong> Never use your regular Gmail password. App Passwords are specifically designed for third-party apps and can be revoked anytime without affecting your main account.
+                  </p>
+                </div>
+              </div>
+            </CollapsibleContent>
+          </Collapsible>
+
           <div className="space-y-4">
             {emailSettings.map(setting => (
               <div key={setting.key}>
@@ -259,28 +309,58 @@ export const SettingsManager = () => {
                 </div>
               </div>
             ))}
-            <div className="pt-2">
-              <a 
-                href="https://myaccount.google.com/apppasswords" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="text-sm text-primary hover:underline"
-              >
-                → Generate Gmail App Password
-              </a>
-            </div>
           </div>
         </div>
 
         {/* Mapbox Configuration */}
         <div className="bg-background rounded-xl p-6 shadow-heritage-sm">
           <h3 className="font-semibold mb-4 flex items-center gap-2">
-            <Shield className="w-5 h-5" />
+            <Map className="w-5 h-5" />
             Map Configuration (Mapbox)
           </h3>
           <p className="text-sm text-muted-foreground mb-4">
             Configure Mapbox for interactive maps and location search.
           </p>
+
+          {/* Mapbox Setup Guide */}
+          <Collapsible open={showMapboxGuide} onOpenChange={setShowMapboxGuide} className="mb-4">
+            <CollapsibleTrigger className="flex items-center gap-2 text-sm text-primary hover:underline w-full justify-between bg-muted/50 p-3 rounded-lg">
+              <span className="flex items-center gap-2">
+                <HelpCircle className="w-4 h-4" />
+                Mapbox Token Setup Guide
+              </span>
+              {showMapboxGuide ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+            </CollapsibleTrigger>
+            <CollapsibleContent className="mt-2">
+              <div className="bg-muted/30 rounded-lg p-4 text-sm space-y-3 border border-border">
+                <h4 className="font-semibold text-foreground">Step-by-Step Guide:</h4>
+                <ol className="list-decimal list-inside space-y-2 text-muted-foreground">
+                  <li>
+                    <strong className="text-foreground">Create Mapbox Account</strong>
+                    <p className="ml-5 mt-1">Go to <a href="https://account.mapbox.com/auth/signup/" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">Mapbox Sign Up</a> and create a free account.</p>
+                  </li>
+                  <li>
+                    <strong className="text-foreground">Access Your Tokens</strong>
+                    <p className="ml-5 mt-1">Visit <a href="https://account.mapbox.com/access-tokens/" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">Access Tokens</a> page in your Mapbox dashboard.</p>
+                  </li>
+                  <li>
+                    <strong className="text-foreground">Copy Default Public Token</strong>
+                    <p className="ml-5 mt-1">You can use the "Default public token" that Mapbox creates automatically, or create a new one with custom scopes.</p>
+                  </li>
+                  <li>
+                    <strong className="text-foreground">Paste Token Below</strong>
+                    <p className="ml-5 mt-1">Copy the token (starts with "pk.") and paste it in the Mapbox Public Token field below.</p>
+                  </li>
+                </ol>
+                <div className="mt-3 p-3 bg-blue-500/10 border border-blue-500/30 rounded-lg">
+                  <p className="text-blue-700 dark:text-blue-400 text-xs">
+                    <strong>💡 Free Tier:</strong> Mapbox offers 50,000 free map loads per month. This is sufficient for most small to medium websites.
+                  </p>
+                </div>
+              </div>
+            </CollapsibleContent>
+          </Collapsible>
+
           <div className="space-y-4">
             {mapSettings.map(setting => (
               <div key={setting.key}>
@@ -306,16 +386,6 @@ export const SettingsManager = () => {
                 </div>
               </div>
             ))}
-            <div className="pt-2">
-              <a 
-                href="https://account.mapbox.com/access-tokens/" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="text-sm text-primary hover:underline"
-              >
-                → Get Mapbox Access Token
-              </a>
-            </div>
           </div>
         </div>
 
