@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { SMTPClient } from "https://deno.land/x/denomailer@1.6.0/mod.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -14,6 +15,37 @@ interface ContactEmailRequest {
   message: string;
 }
 
+interface AppSetting {
+  key: string;
+  value: string | null;
+}
+
+async function getSettingsFromDB(): Promise<Record<string, string>> {
+  const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+  const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+  
+  const supabase = createClient(supabaseUrl, supabaseServiceKey);
+  
+  const { data, error } = await supabase
+    .from("app_settings")
+    .select("key, value")
+    .in("key", ["GMAIL_USER", "GMAIL_APP_PASSWORD", "SITE_NAME"]);
+
+  if (error) {
+    console.error("Error fetching settings from DB:", error);
+    return {};
+  }
+
+  const settings: Record<string, string> = {};
+  (data as AppSetting[])?.forEach((setting) => {
+    if (setting.value) {
+      settings[setting.key] = setting.value;
+    }
+  });
+
+  return settings;
+}
+
 const handler = async (req: Request): Promise<Response> => {
   // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
@@ -25,12 +57,18 @@ const handler = async (req: Request): Promise<Response> => {
 
     console.log("Sending contact email from:", email);
 
-    const GMAIL_USER = Deno.env.get("GMAIL_USER");
-    const GMAIL_APP_PASSWORD = Deno.env.get("GMAIL_APP_PASSWORD");
+    // Try to get settings from database first, fallback to env variables
+    const dbSettings = await getSettingsFromDB();
+    
+    const GMAIL_USER = dbSettings.GMAIL_USER || Deno.env.get("GMAIL_USER");
+    const GMAIL_APP_PASSWORD = dbSettings.GMAIL_APP_PASSWORD || Deno.env.get("GMAIL_APP_PASSWORD");
+    const SITE_NAME = dbSettings.SITE_NAME || "Heritage Guide";
     
     if (!GMAIL_USER || !GMAIL_APP_PASSWORD) {
-      throw new Error("Gmail SMTP credentials are not configured");
+      throw new Error("Gmail SMTP credentials are not configured. Please set them in Admin Settings or Cloud Secrets.");
     }
+
+    console.log("Using Gmail account:", GMAIL_USER);
 
     // Create SMTP client for Gmail
     const client = new SMTPClient({
@@ -63,7 +101,7 @@ const handler = async (req: Request): Promise<Response> => {
       <body>
         <div class="container">
           <div class="header">
-            <div class="logo">🏛️ Heritage Guide</div>
+            <div class="logo">🏛️ ${SITE_NAME}</div>
           </div>
           <div class="content">
             <h2>Thank you for reaching out, ${name}!</h2>
@@ -76,10 +114,10 @@ const handler = async (req: Request): Promise<Response> => {
             </div>
             
             <p>In the meantime, feel free to explore our virtual tours and discover more heritage sites!</p>
-            <p>Best regards,<br>The Heritage Guide Team</p>
+            <p>Best regards,<br>The ${SITE_NAME} Team</p>
           </div>
           <div class="footer">
-            <p>© 2024 Heritage Guide. All rights reserved.</p>
+            <p>© ${new Date().getFullYear()} ${SITE_NAME}. All rights reserved.</p>
             <p>Discover the World's Cultural Treasures</p>
           </div>
         </div>
@@ -91,7 +129,7 @@ const handler = async (req: Request): Promise<Response> => {
     await client.send({
       from: GMAIL_USER,
       to: email,
-      subject: "We received your message - Heritage Guide",
+      subject: `We received your message - ${SITE_NAME}`,
       content: "auto",
       html: htmlContent,
     });

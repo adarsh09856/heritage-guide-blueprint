@@ -2,13 +2,73 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
-import { Database, Users, FileImage, Shield } from 'lucide-react';
+import { Database, Users, FileImage, Shield, Mail, Eye, EyeOff } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { sampleDestinations, sampleVirtualTours, sampleStories, sampleExperiences } from '@/data/sampleData';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+
+interface AppSetting {
+  id: string;
+  key: string;
+  value: string | null;
+  is_secret: boolean;
+  description: string | null;
+}
 
 export const SettingsManager = () => {
   const [isSeeding, setIsSeeding] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [settings, setSettings] = useState<AppSetting[]>([]);
+  const [showSecrets, setShowSecrets] = useState<Record<string, boolean>>({});
+  const [formValues, setFormValues] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    fetchSettings();
+  }, []);
+
+  const fetchSettings = async () => {
+    const { data, error } = await supabase
+      .from('app_settings')
+      .select('*')
+      .order('key');
+    
+    if (error) {
+      console.error('Error fetching settings:', error);
+      toast.error('Failed to load settings');
+      return;
+    }
+
+    setSettings(data || []);
+    const values: Record<string, string> = {};
+    data?.forEach(setting => {
+      values[setting.key] = setting.value || '';
+    });
+    setFormValues(values);
+  };
+
+  const handleSaveSettings = async () => {
+    setIsSaving(true);
+    try {
+      for (const [key, value] of Object.entries(formValues)) {
+        const { error } = await supabase
+          .from('app_settings')
+          .update({ value })
+          .eq('key', key);
+        
+        if (error) throw error;
+      }
+      toast.success('Settings saved successfully!');
+    } catch (error) {
+      console.error('Error saving settings:', error);
+      toast.error('Failed to save settings');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const toggleSecretVisibility = (key: string) => {
+    setShowSecrets(prev => ({ ...prev, [key]: !prev[key] }));
+  };
 
   const seedDatabase = async () => {
     setIsSeeding(true);
@@ -133,6 +193,9 @@ export const SettingsManager = () => {
     }
   };
 
+  const emailSettings = settings.filter(s => s.key.includes('GMAIL') || s.key === 'CONTACT_EMAIL');
+  const generalSettings = settings.filter(s => s.key === 'SITE_NAME');
+
   return (
     <div className="max-w-3xl">
       <h1 className="font-serif text-2xl font-bold mb-2">Settings</h1>
@@ -146,17 +209,72 @@ export const SettingsManager = () => {
             General Settings
           </h3>
           <div className="space-y-4">
-            <div>
-              <Label htmlFor="siteName">Site Name</Label>
-              <Input id="siteName" defaultValue="Heritage Guide" />
-            </div>
-            <div>
-              <Label htmlFor="siteDescription">Site Description</Label>
-              <Input id="siteDescription" defaultValue="Discover World Heritage Sites" />
-            </div>
-            <Button variant="heritage">Save Changes</Button>
+            {generalSettings.map(setting => (
+              <div key={setting.key}>
+                <Label htmlFor={setting.key}>{setting.description || setting.key}</Label>
+                <Input
+                  id={setting.key}
+                  value={formValues[setting.key] || ''}
+                  onChange={(e) => setFormValues(prev => ({ ...prev, [setting.key]: e.target.value }))}
+                  placeholder={setting.description || ''}
+                />
+              </div>
+            ))}
           </div>
         </div>
+
+        {/* Email Configuration */}
+        <div className="bg-background rounded-xl p-6 shadow-heritage-sm">
+          <h3 className="font-semibold mb-4 flex items-center gap-2">
+            <Mail className="w-5 h-5" />
+            Email Configuration (Gmail SMTP)
+          </h3>
+          <p className="text-sm text-muted-foreground mb-4">
+            Configure Gmail SMTP for sending contact form emails and notifications.
+            You need a Gmail App Password (not your regular password).
+          </p>
+          <div className="space-y-4">
+            {emailSettings.map(setting => (
+              <div key={setting.key}>
+                <Label htmlFor={setting.key}>{setting.description || setting.key}</Label>
+                <div className="relative">
+                  <Input
+                    id={setting.key}
+                    type={setting.is_secret && !showSecrets[setting.key] ? 'password' : 'text'}
+                    value={formValues[setting.key] || ''}
+                    onChange={(e) => setFormValues(prev => ({ ...prev, [setting.key]: e.target.value }))}
+                    placeholder={setting.is_secret ? '••••••••' : setting.description || ''}
+                    className="pr-10"
+                  />
+                  {setting.is_secret && (
+                    <button
+                      type="button"
+                      onClick={() => toggleSecretVisibility(setting.key)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                    >
+                      {showSecrets[setting.key] ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  )}
+                </div>
+              </div>
+            ))}
+            <div className="pt-2">
+              <a 
+                href="https://myaccount.google.com/apppasswords" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-sm text-primary hover:underline"
+              >
+                → Generate Gmail App Password
+              </a>
+            </div>
+          </div>
+        </div>
+
+        {/* Save Button */}
+        <Button variant="heritage" onClick={handleSaveSettings} disabled={isSaving} className="w-full">
+          {isSaving ? 'Saving...' : 'Save All Settings'}
+        </Button>
 
         {/* Database Seeding */}
         <div className="bg-background rounded-xl p-6 shadow-heritage-sm">
